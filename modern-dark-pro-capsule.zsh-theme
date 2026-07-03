@@ -59,6 +59,7 @@ MODERN_DARK_PRO_NERD_FONTS="${MODERN_DARK_PRO_NERD_FONTS:-true}" # Default to tr
 MODERN_DARK_PRO_PATH_STYLE="${MODERN_DARK_PRO_PATH_STYLE:-limit}"
 MODERN_DARK_PRO_PATH_DEPTH="${MODERN_DARK_PRO_PATH_DEPTH:-3}"
 MODERN_DARK_PRO_PILL_STYLE="${MODERN_DARK_PRO_PILL_STYLE:-bracket}" # bracket, round, or none
+MODERN_DARK_PRO_PILL_COLOR_STYLE="${MODERN_DARK_PRO_PILL_COLOR_STYLE:-solid}" # solid or dark (applies to round style)
 MODERN_DARK_PRO_PROMPT_LAYOUT="${MODERN_DARK_PRO_PROMPT_LAYOUT:-two-line}" # single, two-line, or classic
 MODERN_DARK_PRO_SHOW_CLOCK="${MODERN_DARK_PRO_SHOW_CLOCK:-true}"
 MODERN_DARK_PRO_BORDER_COLOR="${MODERN_DARK_PRO_BORDER_COLOR:-${COLOR_CONNECTOR}}"
@@ -134,23 +135,52 @@ function _modern_dark_pro_make_pill() {
 
   local style="${MODERN_DARK_PRO_PILL_STYLE:-bracket}"
   
-  # Space padding around the content inside the pill
-  local inner=""
-  if [[ -n "${symbol}" ]]; then
-    inner="%F{${fg}}${symbol} ${content}%f"
-  else
-    inner="%F{${fg}}${content}%f"
-  fi
-
   if [[ "${style}" == "round" ]]; then
-    # Solid rounded pill using Powerline symbols
-    local pill_bg="${bg:-#282828}"
+    local color_style="${MODERN_DARK_PRO_PILL_COLOR_STYLE:-solid}"
+    local pill_bg
+    local pill_fg
+    local final_content="${content}"
+    
+    if [[ "${color_style}" == "solid" ]]; then
+      # Solid colored pill with dark text (like preview-capsule.png)
+      pill_bg="${fg}"
+      pill_fg="${MODERN_DARK_PRO_PILL_TEXT_COLOR:-#111111}"
+      
+      # Strip embedded colors so text is uniformly dark and readable
+      setopt local_options extendedglob
+      final_content="${content//\%F\{[^\}]##\}/}"
+      final_content="${final_content//\%f/}"
+    else
+      # Dark gray pill with colored text
+      pill_bg="${bg:-#282828}"
+      pill_fg="${fg}"
+    fi
+    
+    local inner=""
+    if [[ -n "${symbol}" ]]; then
+      inner="%F{${pill_fg}}${symbol} ${final_content}%f"
+    else
+      inner="%F{${pill_fg}}${final_content}%f"
+    fi
+    
     echo -n "%F{${pill_bg}}%K{${pill_bg}} ${inner} %k%F{${pill_bg}}%f"
   elif [[ "${style}" == "bracket" ]]; then
     # Bracket outline pill matching screenshot style
+    local inner=""
+    if [[ -n "${symbol}" ]]; then
+      inner="%F{${fg}}${symbol} ${content}%f"
+    else
+      inner="%F{${fg}}${content}%f"
+    fi
     echo -n "%F{${MODERN_DARK_PRO_BORDER_COLOR}}[ %f${inner} %F{${MODERN_DARK_PRO_BORDER_COLOR}}]%f"
   else
     # Simple text (no container)
+    local inner=""
+    if [[ -n "${symbol}" ]]; then
+      inner="%F{${fg}}${symbol} ${content}%f"
+    else
+      inner="%F{${fg}}${content}%f"
+    fi
     echo -n " ${inner}"
   fi
 }
