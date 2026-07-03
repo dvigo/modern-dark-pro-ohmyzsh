@@ -1,8 +1,10 @@
 # 🎨 Modern Dark Pro - Oh My Zsh Theme
 
-A premium, modern, and dark-mode-optimized Oh My Zsh theme inspired by the [Modern Dark Pro](https://github.com/dvigo/modern-dark-pro) color palettes. 
+A premium, modern, and dark-mode-optimized Oh My Zsh theme inspired by the [Modern Dark Pro](https://github.com/dvigo/modern-dark-pro) color palettes.
 
-Designed for developers who appreciate clean typography, high readability, subtle guide connectors, and fast execution times.
+Designed for developers who appreciate clean typography, high readability, and fast execution times. This repository provides **two distinct theme files**:
+- **Classic Theme (`modern-dark-pro`)**: Features a clean, two-line layout with subtle guide lines (`┌─` and `└─`).
+- **Capsule Theme (`modern-dark-pro-capsule`)**: Features a modern, bubble-style prompt wrapping your status segments (folder, branch, git stats) in sleek capsule containers.
 
 ---
 
@@ -46,19 +48,25 @@ git clone https://github.com/dvigo/modern-dark-pro-ohmyzsh.git ~/dev/modern-dark
 ```
 
 ### Step 2: Run the installer
-Run the provided installer script, which creates a symlink to your Oh My Zsh custom themes folder:
+Run the installer script, which creates symlinks for **both theme variants** in your Oh My Zsh custom themes folder:
 ```bash
 cd ~/dev/modern-dark-pro-ohmyzsh
 ./install.sh
 ```
 
 ### Step 3: Configure your `~/.zshrc`
-Open your `~/.zshrc` and change the `ZSH_THEME` setting:
-```bash
-ZSH_THEME="modern-dark-pro"
-```
+Open your `~/.zshrc` and choose the theme you wish to use:
 
-Reload your terminal:
+- For the **Classic Theme**:
+  ```bash
+  ZSH_THEME="modern-dark-pro"
+  ```
+- For the **Capsule Theme** (like the screenshot):
+  ```bash
+  ZSH_THEME="modern-dark-pro-capsule"
+  ```
+
+Reload your terminal to apply:
 ```bash
 source ~/.zshrc
 ```
@@ -139,6 +147,38 @@ export MODERN_DARK_PRO_PATH_STYLE="shrink"
 
 # Depth level (used only if style is set to 'limit') (default: 3)
 export MODERN_DARK_PRO_PATH_DEPTH=3
+```
+
+### 6. Capsule Theme Options (Capsule Theme Only)
+If you are using the `modern-dark-pro-capsule` theme, you can configure these exclusive options:
+
+#### Container Style (`MODERN_DARK_PRO_PILL_STYLE`)
+Choose how your capsule segments are wrapped:
+- `bracket` (default): Outlines each segment in thin bordered brackets, e.g. `[ 📁 path ]`.
+- `round`: Renders solid-background capsules with Powerline rounded caps (`` and ``).
+- `none`: Disables capsules, showing flat text.
+
+```bash
+# Options: "bracket" (default), "round", "none"
+export MODERN_DARK_PRO_PILL_STYLE="bracket"
+```
+
+#### Prompt Layout (`MODERN_DARK_PRO_PROMPT_LAYOUT`)
+Choose how the prompt is structured:
+- `two-line` (default): Capsules and clock on line 1, input prompt character (`❯`) on line 2. Highly recommended for spaciousness.
+- `single`: All capsules and prompt character (`❯`) on a single line.
+- `classic`: Wraps segments in capsules but connects them to the prompt character using the classic connecting lines (`┌─` and `└─`).
+
+```bash
+# Options: "two-line" (default), "single", "classic"
+export MODERN_DARK_PRO_PROMPT_LAYOUT="two-line"
+```
+
+#### Clock Toggle (`MODERN_DARK_PRO_SHOW_CLOCK`)
+Toggle the right-aligned clock:
+```bash
+# Options: true (default) or false
+export MODERN_DARK_PRO_SHOW_CLOCK=true
 ```
 
 ---
