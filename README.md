@@ -76,10 +76,49 @@ Choose between the two color variants:
 export MODERN_DARK_PRO_VARIANT="night"
 ```
 
-### 2. Developer Icons (Nerd Fonts)
-The theme defaults to using standard Unicode symbols so that it works out of the box on all systems without any rendering issues. If your terminal uses a Nerd Font, you can enable developer icons by setting:
+### 2. Theme Style (Standard vs Capsule)
+Choose the visual presentation style of your prompt elements:
+- `standard` (default): Classic text-based style with subtle line connectors.
+- `capsule`: Modern capsule/pill-shaped status segments.
+
 ```bash
-# Enable Nerd Fonts (default: false). Set to true for developer icons.
+# Options: "standard" (default) or "capsule"
+export MODERN_DARK_PRO_STYLE="standard"
+```
+
+If you choose the `capsule` style, you can customize the container shape:
+- `bracket` (default): Bracketed capsules, e.g. `[ main ]`.
+- `round`: Powerline-style rounded capsules, e.g. ` main `.
+- `none`: Raw text with generous spacing.
+
+```bash
+# Options: "bracket" (default), "round", or "none"
+export MODERN_DARK_PRO_PILL_STYLE="bracket"
+
+# For "round" style, choose the background color mode:
+# - "solid" (default): Solid background color matching the indicator, dark text.
+# - "dark": Dark background (#282828), colored text/indicator.
+export MODERN_DARK_PRO_PILL_COLOR_STYLE="solid"
+```
+
+### 3. Prompt Layouts
+Choose how your prompt lines are arranged. Layouts are fully compatible with both theme styles:
+- `classic` (default for `standard` style): The classic layout featuring a top frame border (`┌─` / `└─`) and right-aligned clock.
+- `two-line` (default for `capsule` style): A clean, modern double-line prompt with no borders.
+- `single`: A compact single-line prompt with the clock optionally placed in `RPROMPT`.
+
+```bash
+# Options: "classic", "two-line", or "single"
+export MODERN_DARK_PRO_PROMPT_LAYOUT="two-line"
+
+# Toggle the right-aligned clock display (default: true)
+export MODERN_DARK_PRO_SHOW_CLOCK=true
+```
+
+### 4. Developer Icons (Nerd Fonts)
+The theme defaults to using standard Unicode symbols so that it works out of the box on all systems without any rendering issues (when using `standard` style). If your terminal uses a Nerd Font, or if you use the `capsule` style (which defaults Nerd Fonts to `true`), you can enable developer icons:
+```bash
+# Enable Nerd Fonts (default: true for capsule, false for standard)
 export MODERN_DARK_PRO_NERD_FONTS=true
 ```
 
@@ -88,6 +127,8 @@ export MODERN_DARK_PRO_NERD_FONTS=true
 
 | Indicator | Nerd Fonts Symbol Name | Standard Unicode (Default) |
 | :--- | :--- | :--- |
+| **Folder Icon** | Folder Outline (``) | `📁` |
+| **Changes Icon** | File Document (``) | `📄` |
 | **Git Branch** | Git Branch (``) | `⭠` |
 | **Command Timer / Clock** | Clock (``) | `🕒` |
 | **Modified / Dirty** | Solid Times Circle (``) | `✗` |
@@ -113,7 +154,7 @@ If you don't have a Nerd Font installed locally on your browser or editor, here 
 ![Modern Dark Pro Symbols Legend](symbols.png)
 
 
-### 3. Prompt Character & Custom Icons
+### 5. Prompt Character & Custom Icons
 You can customize the prompt characters or icons manually in your `~/.zshrc`:
 ```bash
 # Custom primary prompt symbol (default: ❯)
@@ -123,7 +164,7 @@ export MODERN_DARK_PRO_CHAR="❯"
 export MODERN_DARK_PRO_GIT_SYMBOL=""
 ```
 
-### 4. Command Timer Options
+### 6. Command Timer Options
 You can toggle the timer or change the minimum threshold in seconds:
 ```bash
 # Toggle showing command execution duration (default: true)
@@ -133,10 +174,10 @@ export MODERN_DARK_PRO_SHOW_EXEC_TIME=true
 export MODERN_DARK_PRO_EXEC_TIME_MIN=3
 ```
 
-### 5. Directory Path Styles
+### 7. Directory Path Styles
 You can customize how the working directory is displayed and shortened in your prompt:
 ```bash
-# Choose path display style: 'shrink' (default), 'limit', or 'full'
+# Choose path display style: 'shrink' (default for standard), 'limit' (default for capsule), or 'full'
 # - 'shrink': Shrinks parent folders to 1 letter, e.g., ~/d/p/modern-dark-pro-ohmyzsh
 # - 'limit': Shows only the last N directories, e.g., .../proyectos/modern-dark-pro-ohmyzsh
 # - 'full': Shows the full directory path, e.g., ~/dev/proyectos/modern-dark-pro-ohmyzsh
@@ -146,7 +187,7 @@ export MODERN_DARK_PRO_PATH_STYLE="shrink"
 export MODERN_DARK_PRO_PATH_DEPTH=3
 ```
 
-### 6. Clickable Prompt Elements (OSC 8 Hyperlinks)
+### 8. Clickable Prompt Elements (OSC 8 Hyperlinks)
 You can make prompt elements clickable (using `Cmd+Click` on macOS or `Ctrl+Click` on Windows/Linux):
 - **Directory Path**: Opens the current directory in your default file manager (e.g., Finder or File Explorer).
 - **Git Branch**: Opens the current branch page on the remote repository (e.g., GitHub, GitLab, or Bitbucket) in your default web browser.
