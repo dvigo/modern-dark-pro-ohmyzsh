@@ -58,6 +58,10 @@ MODERN_DARK_PRO_EXEC_TIME_MIN="${MODERN_DARK_PRO_EXEC_TIME_MIN:-2}"
 MODERN_DARK_PRO_NERD_FONTS="${MODERN_DARK_PRO_NERD_FONTS:-false}"
 MODERN_DARK_PRO_PATH_STYLE="${MODERN_DARK_PRO_PATH_STYLE:-shrink}"
 MODERN_DARK_PRO_PATH_DEPTH="${MODERN_DARK_PRO_PATH_DEPTH:-3}"
+MODERN_DARK_PRO_CLICKABLE_PATH="${MODERN_DARK_PRO_CLICKABLE_PATH:-true}"
+MODERN_DARK_PRO_CLICKABLE_GIT="${MODERN_DARK_PRO_CLICKABLE_GIT:-true}"
+
+
 
 # Enable terminal colors for BSD ls (macOS) and GNU ls (Linux)
 export CLICOLOR=1
@@ -131,6 +135,28 @@ function _modern_dark_pro_git_prompt() {
     return
   fi
 
+  # Cache remote URL for speed
+  if [[ "${PWD}" != "${_MODERN_DARK_PRO_LAST_GIT_PWD}" ]]; then
+    _MODERN_DARK_PRO_LAST_GIT_PWD="${PWD}"
+    _MODERN_DARK_PRO_CACHED_GIT_REMOTE=""
+    local remote_url
+    remote_url=$(git config --get remote.origin.url 2>/dev/null)
+    if [[ -z "${remote_url}" ]]; then
+      remote_url=$(git remote -v 2>/dev/null | head -n 1 | awk '{print $2}')
+    fi
+    if [[ -n "${remote_url}" ]]; then
+      # Convert remote URL to web URL
+      remote_url="${remote_url%.git}"
+      if [[ "${remote_url}" =~ "^(git@|ssh://git@)([^:/]+)[:/](.+)$" ]]; then
+        local host="${match[2]}"
+        local repo_path="${match[3]}"
+        remote_url="https://${host}/${repo_path}"
+      fi
+      _MODERN_DARK_PRO_CACHED_GIT_REMOTE="${remote_url}"
+    fi
+  fi
+
+
   # Get branch information and status in a single Git call
   local git_status_out
   git_status_out=$(git status --porcelain -b 2>/dev/null)
@@ -202,7 +228,25 @@ function _modern_dark_pro_git_prompt() {
   [[ $ahead -gt 0 ]] && status_items+=("%F{${COLOR_SUCCESS}}${MODERN_DARK_PRO_AHEAD_SYMBOL}${ahead}%f")
   [[ $behind -gt 0 ]] && status_items+=("%F{${COLOR_ERROR}}${MODERN_DARK_PRO_BEHIND_SYMBOL}${behind}%f")
   
-  local git_display="%F{${COLOR_GIT_BRANCH}}${MODERN_DARK_PRO_GIT_SYMBOL} ${ref}%f"
+  local git_url=""
+  if [[ "${MODERN_DARK_PRO_CLICKABLE_GIT}" == "true" && -n "${_MODERN_DARK_PRO_CACHED_GIT_REMOTE}" && -z "${SSH_CONNECTION}" && -z "${SSH_CLIENT}" && -z "${SSH_TTY}" ]]; then
+    local REPLY
+    _modern_dark_pro_urlencode "${ref}"
+    local escaped_ref="${REPLY//\%/%%}"
+    if [[ "${_MODERN_DARK_PRO_CACHED_GIT_REMOTE}" == *"bitbucket"* ]]; then
+      git_url="${_MODERN_DARK_PRO_CACHED_GIT_REMOTE}/src/${escaped_ref}"
+    else
+      git_url="${_MODERN_DARK_PRO_CACHED_GIT_REMOTE}/tree/${escaped_ref}"
+    fi
+  fi
+
+  local git_display
+  if [[ -n "${git_url}" ]]; then
+    git_display="%{\e]8;;${git_url}\e\\%}%F{${COLOR_GIT_BRANCH}}${MODERN_DARK_PRO_GIT_SYMBOL} ${ref}%f%{\e]8;;\e\\%}"
+  else
+    git_display="%F{${COLOR_GIT_BRANCH}}${MODERN_DARK_PRO_GIT_SYMBOL} ${ref}%f"
+  fi
+
   
   # Join items with a space and add a space after '[' and before ']' for padding/breathing room
   if [[ ${#status_items} -gt 0 ]]; then
@@ -294,6 +338,14 @@ function _modern_dark_pro_path() {
   fi
 }
 
+# URL encodes a string using pure Zsh parameter expansion (blazingly fast)
+# Assigns the result to the REPLY variable to avoid command substitution overhead
+function _modern_dark_pro_urlencode() {
+  setopt localoptions extendedglob
+  local input="${1}"
+  REPLY="${input//(#b)([^a-zA-Z0-9._\-\/])/%${(l:2::0:)$(([##16]#match))}}"
+}
+
 
 # Runtimes caching variables to keep prompt blazingly fast
 _MODERN_DARK_PRO_LAST_PWD=""
@@ -302,6 +354,11 @@ _MODERN_DARK_PRO_CACHED_NODE=""
 _MODERN_DARK_PRO_CACHED_GO=""
 _MODERN_DARK_PRO_CACHED_RUST=""
 _MODERN_DARK_PRO_CACHED_TF=""
+_MODERN_DARK_PRO_PATH_URL=""
+_MODERN_DARK_PRO_LAST_GIT_PWD=""
+_MODERN_DARK_PRO_CACHED_GIT_REMOTE=""
+
+
 
 
 # Updates runtimes versions only if PWD or PATH has changed (highly optimized)
@@ -443,6 +500,15 @@ function _modern_dark_pro_precmd() {
   # Precompute expensive/dynamic prompt sections
   _modern_dark_pro_update_runtimes
   _MODERN_DARK_PRO_PATH_VAL=$(_modern_dark_pro_path)
+  
+  # Generate OSC 8 URL for clickable path if enabled and not SSH session
+  _MODERN_DARK_PRO_PATH_URL=""
+  if [[ "${MODERN_DARK_PRO_CLICKABLE_PATH}" == "true" && -z "${SSH_CONNECTION}" && -z "${SSH_CLIENT}" && -z "${SSH_TTY}" ]]; then
+    local REPLY
+    _modern_dark_pro_urlencode "${PWD}"
+    local escaped_url="${REPLY//\%/%%}"
+    _MODERN_DARK_PRO_PATH_URL="file://${escaped_url}"
+  fi
   _MODERN_DARK_PRO_GIT_STATUS=$(_modern_dark_pro_git_prompt)
   _MODERN_DARK_PRO_SSH_STATUS=$(_modern_dark_pro_ssh_status)
   _MODERN_DARK_PRO_READONLY=$(_modern_dark_pro_readonly)
@@ -466,7 +532,12 @@ function _modern_dark_pro_precmd() {
 
 # Renders the first line of the prompt with a dynamic right-aligned clock
 function _modern_dark_pro_first_line() {
-  local left="%F{${COLOR_CONNECTOR}}┌─%f${_MODERN_DARK_PRO_SSH_STATUS} %F{${COLOR_PATH}}${_MODERN_DARK_PRO_PATH_VAL}%f${_MODERN_DARK_PRO_READONLY}${_MODERN_DARK_PRO_GIT_STATUS}${_MODERN_DARK_PRO_VENV}${_MODERN_DARK_PRO_NODE}${_MODERN_DARK_PRO_GO}${_MODERN_DARK_PRO_RUST}${_MODERN_DARK_PRO_TF}${_MODERN_DARK_PRO_K8S}${_MODERN_DARK_PRO_AWS}${_MODERN_DARK_PRO_JOBS}${_MODERN_DARK_PRO_ELAPSED_TIME}"
+  local path_block="%F{${COLOR_PATH}}${_MODERN_DARK_PRO_PATH_VAL}%f"
+  if [[ -n "${_MODERN_DARK_PRO_PATH_URL}" ]]; then
+    path_block="%{\e]8;;${_MODERN_DARK_PRO_PATH_URL}\e\\%}${path_block}%{\e]8;;\e\\%}"
+  fi
+
+  local left="%F{${COLOR_CONNECTOR}}┌─%f${_MODERN_DARK_PRO_SSH_STATUS} ${path_block}${_MODERN_DARK_PRO_READONLY}${_MODERN_DARK_PRO_GIT_STATUS}${_MODERN_DARK_PRO_VENV}${_MODERN_DARK_PRO_NODE}${_MODERN_DARK_PRO_GO}${_MODERN_DARK_PRO_RUST}${_MODERN_DARK_PRO_TF}${_MODERN_DARK_PRO_K8S}${_MODERN_DARK_PRO_AWS}${_MODERN_DARK_PRO_JOBS}${_MODERN_DARK_PRO_ELAPSED_TIME}"
   
   # Expand prompt escape sequences to compute visual width
   local expanded_left="${(%%)left}"
@@ -474,6 +545,8 @@ function _modern_dark_pro_first_line() {
   # Strip ANSI color/style escape sequences from expanded left prompt
   setopt local_options extended_glob
   local clean_left="${expanded_left//$'\x1b'\[[0-9;]##[a-zA-Z]/}"
+  # Strip OSC 8 hyperlink sequences from expanded left prompt for correct width calculation
+  clean_left="${clean_left//$'\x1b'\]8;[^$'\x1b']#$'\x1b'\\/}"
   local left_width=${(m)#clean_left}
   
   # Prepare the right-aligned clock block
