@@ -160,6 +160,18 @@ export MODERN_DARK_PRO_CLICKABLE_PATH=true
 export MODERN_DARK_PRO_CLICKABLE_GIT=true
 ```
 
+### 7. Git Diff Statistics
+When the repository is dirty, show the number of added/deleted lines inside the git status brackets, e.g. `master [ +123/-45 ]` (green additions, red deletions):
+```bash
+# Toggle showing added/deleted line counts (default: false)
+export MODERN_DARK_PRO_SHOW_GIT_DIFF_STATS=true
+
+# Also count staged (uncommitted) changes, not just unstaged ones (default: false)
+export MODERN_DARK_PRO_GIT_DIFF_STATS_STAGED=true
+```
+
+When enabled, the dirty symbol (`✗`) is replaced by the line counts, since they convey the same information. Binary files are skipped (they have no line counts). The counter is hidden when there are no tracked changes (e.g. only untracked files present).
+
 ---
 
 ## 🎨 Color Palettes

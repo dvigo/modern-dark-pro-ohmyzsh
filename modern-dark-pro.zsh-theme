@@ -60,6 +60,8 @@ MODERN_DARK_PRO_PATH_STYLE="${MODERN_DARK_PRO_PATH_STYLE:-shrink}"
 MODERN_DARK_PRO_PATH_DEPTH="${MODERN_DARK_PRO_PATH_DEPTH:-3}"
 MODERN_DARK_PRO_CLICKABLE_PATH="${MODERN_DARK_PRO_CLICKABLE_PATH:-true}"
 MODERN_DARK_PRO_CLICKABLE_GIT="${MODERN_DARK_PRO_CLICKABLE_GIT:-true}"
+MODERN_DARK_PRO_SHOW_GIT_DIFF_STATS="${MODERN_DARK_PRO_SHOW_GIT_DIFF_STATS:-false}"
+MODERN_DARK_PRO_GIT_DIFF_STATS_STAGED="${MODERN_DARK_PRO_GIT_DIFF_STATS_STAGED:-false}"
 
 
 
@@ -218,12 +220,33 @@ function _modern_dark_pro_git_prompt() {
     stashed=1
   fi
 
+  # Line-level diff statistics (added/deleted), gated behind configuration
+  local diff_added=0
+  local diff_deleted=0
+  if [[ "${MODERN_DARK_PRO_SHOW_GIT_DIFF_STATS}" == "true" ]]; then
+    local -a numstat_sources
+    numstat_sources=("git diff --numstat")
+    if [[ "${MODERN_DARK_PRO_GIT_DIFF_STATS_STAGED}" == "true" ]]; then
+      numstat_sources+=("git diff --cached --numstat")
+    fi
+    local cmd numstat_line num_a num_d
+    for cmd in "${numstat_sources[@]}"; do
+      while IFS=$'\t' read -r num_a num_d _; do
+        [[ "${num_a}" == "-" || "${num_d}" == "-" ]] && continue  # binary files
+        (( diff_added += num_a ))
+        (( diff_deleted += num_d ))
+      done < <(${=cmd} 2>/dev/null)
+    done
+  fi
+
   # Build indicators list using Zsh array to separate multiple icons with a space
   local -a status_items
-  [[ $dirty -eq 1 ]] && status_items+=("%F{${COLOR_ERROR}}${MODERN_DARK_PRO_DIRTY_SYMBOL}%f")
+  # Diff stats supersede the dirty symbol when enabled
+  [[ $dirty -eq 1 && "${MODERN_DARK_PRO_SHOW_GIT_DIFF_STATS}" != "true" ]] && status_items+=("%F{${COLOR_ERROR}}${MODERN_DARK_PRO_DIRTY_SYMBOL}%f")
   [[ $staged -eq 1 ]] && status_items+=("%F{${COLOR_SUCCESS}}${MODERN_DARK_PRO_STAGED_SYMBOL}%f")
   [[ $untracked -eq 1 ]] && status_items+=("%F{${COLOR_WARNING}}${MODERN_DARK_PRO_UNTRACKED_SYMBOL}%f")
   [[ $stashed -eq 1 ]] && status_items+=("%F{${COLOR_WARNING}}${MODERN_DARK_PRO_STASHED_SYMBOL}%f")
+  (( diff_added + diff_deleted > 0 )) && status_items+=("%F{${COLOR_SUCCESS}}+${diff_added}%f%F{${COLOR_CONNECTOR}}/%f%F{${COLOR_ERROR}}-${diff_deleted}%f")
   
   [[ $ahead -gt 0 ]] && status_items+=("%F{${COLOR_SUCCESS}}${MODERN_DARK_PRO_AHEAD_SYMBOL}${ahead}%f")
   [[ $behind -gt 0 ]] && status_items+=("%F{${COLOR_ERROR}}${MODERN_DARK_PRO_BEHIND_SYMBOL}${behind}%f")
