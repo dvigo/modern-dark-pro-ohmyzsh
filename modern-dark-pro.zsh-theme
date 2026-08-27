@@ -499,9 +499,9 @@ function _modern_dark_pro_precmd() {
     
     if (( elapsed >= MODERN_DARK_PRO_EXEC_TIME_MIN )); then
       if (( elapsed >= 60.0 )); then
-        local mins secs
-        (( mins = (int) (elapsed / 60) ))
-        (( secs = (int) (elapsed) % 60 ))
+        local -i mins secs
+        (( mins = elapsed / 60 ))
+        (( secs = elapsed - mins * 60 ))
         elapsed_time="%F{${COLOR_EXEC_TIME}}${MODERN_DARK_PRO_TIME_SYMBOL} ${mins}m ${secs}s%f"
       else
         elapsed_time=$(printf "%%F{%s}%s %.1fs%%f" "${COLOR_EXEC_TIME}" "${MODERN_DARK_PRO_TIME_SYMBOL}" "${elapsed}")
