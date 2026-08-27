@@ -160,6 +160,16 @@ export MODERN_DARK_PRO_CLICKABLE_PATH=true
 export MODERN_DARK_PRO_CLICKABLE_GIT=true
 ```
 
+### 7. Node.js Version Source
+By default, the Node.js segment shows the installed Node version (`node -v`). You can instead show the project's own `version` field from the local `package.json`:
+```bash
+# Show package.json version instead of installed node version (default: false)
+export MODERN_DARK_PRO_NODE_PROJECT_VERSION=true
+```
+- Only applies when a `package.json` exists in the current directory.
+- The segment is hidden if `package.json` has no `version` field or is invalid.
+- The displayed version refreshes automatically when `package.json` changes (e.g., after `npm version`).
+
 ---
 
 ## 🎨 Color Palettes

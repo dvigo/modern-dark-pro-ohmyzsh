@@ -60,6 +60,7 @@ MODERN_DARK_PRO_PATH_STYLE="${MODERN_DARK_PRO_PATH_STYLE:-shrink}"
 MODERN_DARK_PRO_PATH_DEPTH="${MODERN_DARK_PRO_PATH_DEPTH:-3}"
 MODERN_DARK_PRO_CLICKABLE_PATH="${MODERN_DARK_PRO_CLICKABLE_PATH:-true}"
 MODERN_DARK_PRO_CLICKABLE_GIT="${MODERN_DARK_PRO_CLICKABLE_GIT:-true}"
+MODERN_DARK_PRO_NODE_PROJECT_VERSION="${MODERN_DARK_PRO_NODE_PROJECT_VERSION:-false}"
 
 
 
@@ -76,6 +77,10 @@ fi
 # Autocomplete list-colors configuration matching the theme (specific to override Oh My Zsh)
 zmodload zsh/complist 2>/dev/null
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+
+# Load stat module so we can check package.json mtime via the zstat builtin
+# (no process fork) to refresh the cached project version when it changes
+zmodload zsh/stat 2>/dev/null
 
 
 
@@ -351,6 +356,7 @@ function _modern_dark_pro_urlencode() {
 _MODERN_DARK_PRO_LAST_PWD=""
 _MODERN_DARK_PRO_LAST_PATH=""
 _MODERN_DARK_PRO_CACHED_NODE=""
+_MODERN_DARK_PRO_NODE_PKG_MTIME=""
 _MODERN_DARK_PRO_CACHED_GO=""
 _MODERN_DARK_PRO_CACHED_RUST=""
 _MODERN_DARK_PRO_CACHED_TF=""
@@ -363,15 +369,28 @@ _MODERN_DARK_PRO_CACHED_GIT_REMOTE=""
 
 # Updates runtimes versions only if PWD or PATH has changed (highly optimized)
 function _modern_dark_pro_update_runtimes() {
-  if [[ "${PWD}" == "${_MODERN_DARK_PRO_LAST_PWD}" && "${PATH}" == "${_MODERN_DARK_PRO_LAST_PATH}" ]]; then
+  local pkg_mtime=""
+  if [[ "${MODERN_DARK_PRO_NODE_PROJECT_VERSION}" == "true" && -f package.json ]]; then
+    pkg_mtime=$(zstat +mtime package.json 2>/dev/null)
+  fi
+  if [[ "${PWD}" == "${_MODERN_DARK_PRO_LAST_PWD}" && "${PATH}" == "${_MODERN_DARK_PRO_LAST_PATH}" \
+     && "${pkg_mtime}" == "${_MODERN_DARK_PRO_NODE_PKG_MTIME}" ]]; then
     return
   fi
   _MODERN_DARK_PRO_LAST_PWD="${PWD}"
   _MODERN_DARK_PRO_LAST_PATH="${PATH}"
+  _MODERN_DARK_PRO_NODE_PKG_MTIME="${pkg_mtime}"
 
   # 1. Node.js
   _MODERN_DARK_PRO_CACHED_NODE=""
-  if [[ -f package.json || -d node_modules ]]; then
+  if [[ "${MODERN_DARK_PRO_NODE_PROJECT_VERSION}" == "true" ]]; then
+    # Show project's own version from package.json instead of installed node
+    if [[ -f package.json ]] && (( $+commands[node] )); then
+      local pkg_version=$(node -p 'require("./package.json").version' 2>/dev/null)
+      [[ "${pkg_version}" == "undefined" ]] && pkg_version=""
+      _MODERN_DARK_PRO_CACHED_NODE="${pkg_version}"
+    fi
+  elif [[ -f package.json || -d node_modules ]]; then
     if (( $+commands[node] )); then
       _MODERN_DARK_PRO_CACHED_NODE=$(node -v 2>/dev/null)
     fi
