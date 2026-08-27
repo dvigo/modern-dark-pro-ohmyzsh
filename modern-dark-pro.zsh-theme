@@ -79,6 +79,10 @@ fi
 zmodload zsh/complist 2>/dev/null
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 
+# Load stat module so we can check package.json mtime via the zstat builtin
+# (no process fork) to refresh the cached project version when it changes
+zmodload zsh/stat 2>/dev/null
+
 
 
 # Symbol configurations based on Nerd Fonts toggle
@@ -374,6 +378,7 @@ function _modern_dark_pro_urlencode() {
 _MODERN_DARK_PRO_LAST_PWD=""
 _MODERN_DARK_PRO_LAST_PATH=""
 _MODERN_DARK_PRO_CACHED_NODE=""
+_MODERN_DARK_PRO_NODE_PKG_MTIME=""
 _MODERN_DARK_PRO_CACHED_GO=""
 _MODERN_DARK_PRO_CACHED_RUST=""
 _MODERN_DARK_PRO_CACHED_TF=""
@@ -386,15 +391,28 @@ _MODERN_DARK_PRO_CACHED_GIT_REMOTE=""
 
 # Updates runtimes versions only if PWD or PATH has changed (highly optimized)
 function _modern_dark_pro_update_runtimes() {
-  if [[ "${PWD}" == "${_MODERN_DARK_PRO_LAST_PWD}" && "${PATH}" == "${_MODERN_DARK_PRO_LAST_PATH}" ]]; then
+  local pkg_mtime=""
+  if [[ "${MODERN_DARK_PRO_NODE_PROJECT_VERSION}" == "true" && -f package.json ]]; then
+    pkg_mtime=$(zstat +mtime package.json 2>/dev/null)
+  fi
+  if [[ "${PWD}" == "${_MODERN_DARK_PRO_LAST_PWD}" && "${PATH}" == "${_MODERN_DARK_PRO_LAST_PATH}" \
+     && "${pkg_mtime}" == "${_MODERN_DARK_PRO_NODE_PKG_MTIME}" ]]; then
     return
   fi
   _MODERN_DARK_PRO_LAST_PWD="${PWD}"
   _MODERN_DARK_PRO_LAST_PATH="${PATH}"
+  _MODERN_DARK_PRO_NODE_PKG_MTIME="${pkg_mtime}"
 
   # 1. Node.js
   _MODERN_DARK_PRO_CACHED_NODE=""
-  if [[ -f package.json || -d node_modules ]]; then
+  if [[ "${MODERN_DARK_PRO_NODE_PROJECT_VERSION}" == "true" ]]; then
+    # Show project's own version from package.json instead of installed node
+    if [[ -f package.json ]] && (( $+commands[node] )); then
+      local pkg_version=$(node -p 'require("./package.json").version' 2>/dev/null)
+      [[ "${pkg_version}" == "undefined" ]] && pkg_version=""
+      _MODERN_DARK_PRO_CACHED_NODE="${pkg_version}"
+    fi
+  elif [[ -f package.json || -d node_modules ]]; then
     if (( $+commands[node] )); then
       _MODERN_DARK_PRO_CACHED_NODE=$(node -v 2>/dev/null)
     fi
@@ -503,9 +521,9 @@ function _modern_dark_pro_precmd() {
     
     if (( elapsed >= MODERN_DARK_PRO_EXEC_TIME_MIN )); then
       if (( elapsed >= 60.0 )); then
-        local mins secs
-        (( mins = (int) (elapsed / 60) ))
-        (( secs = (int) (elapsed) % 60 ))
+        local -i mins secs
+        (( mins = elapsed / 60 ))
+        (( secs = elapsed - mins * 60 ))
         elapsed_time="%F{${COLOR_EXEC_TIME}}${MODERN_DARK_PRO_TIME_SYMBOL} ${mins}m ${secs}s%f"
       else
         elapsed_time=$(printf "%%F{%s}%s %.1fs%%f" "${COLOR_EXEC_TIME}" "${MODERN_DARK_PRO_TIME_SYMBOL}" "${elapsed}")
