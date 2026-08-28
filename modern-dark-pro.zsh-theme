@@ -267,11 +267,12 @@ function _modern_dark_pro_git_prompt() {
     fi
   fi
 
+  local safe_ref="${ref//\%/%%}"
   local git_display
   if [[ -n "${git_url}" ]]; then
-    git_display="%{\e]8;;${git_url}\e\\%}%F{${COLOR_GIT_BRANCH}}${MODERN_DARK_PRO_GIT_SYMBOL} ${ref}%f%{\e]8;;\e\\%}"
+    git_display="%{\e]8;;${git_url}\e\\%}%F{${COLOR_GIT_BRANCH}}${MODERN_DARK_PRO_GIT_SYMBOL} ${safe_ref}%f%{\e]8;;\e\\%}"
   else
-    git_display="%F{${COLOR_GIT_BRANCH}}${MODERN_DARK_PRO_GIT_SYMBOL} ${ref}%f"
+    git_display="%F{${COLOR_GIT_BRANCH}}${MODERN_DARK_PRO_GIT_SYMBOL} ${safe_ref}%f"
   fi
 
   # Join items with a space and add a space after '[' and before ']' for padding/breathing room
@@ -310,7 +311,8 @@ function _modern_dark_pro_venv() {
   fi
   
   if [[ -n "${env_name}" ]]; then
-    REPLY=" %F{#e6db74}${MODERN_DARK_PRO_PYTHON_SYMBOL} ${env_name}%f"
+    local safe_env="${env_name//\%/%%}"
+    REPLY=" %F{#e6db74}${MODERN_DARK_PRO_PYTHON_SYMBOL} ${safe_env}%f"
   fi
 }
 
