@@ -62,6 +62,7 @@ MODERN_DARK_PRO_CLICKABLE_PATH="${MODERN_DARK_PRO_CLICKABLE_PATH:-true}"
 MODERN_DARK_PRO_CLICKABLE_GIT="${MODERN_DARK_PRO_CLICKABLE_GIT:-true}"
 MODERN_DARK_PRO_SHOW_GIT_DIFF_STATS="${MODERN_DARK_PRO_SHOW_GIT_DIFF_STATS:-false}"
 MODERN_DARK_PRO_GIT_DIFF_STATS_STAGED="${MODERN_DARK_PRO_GIT_DIFF_STATS_STAGED:-false}"
+MODERN_DARK_PRO_CLOCK_POSITION="${MODERN_DARK_PRO_CLOCK_POSITION:-top}"
 
 
 
@@ -593,6 +594,11 @@ function _modern_dark_pro_first_line() {
   clean_left="${clean_left//$'\x1b'\[[0-9;]##[a-zA-Z]/}"
   local left_width=${(m)#clean_left}
   
+  if [[ "${MODERN_DARK_PRO_CLOCK_POSITION}" == "rprompt" ]]; then
+    echo -n "${left}"
+    return
+  fi
+
   # Prepare the right-aligned clock block
   local right="%F{${COLOR_CONNECTOR}}${MODERN_DARK_PRO_TIME_SYMBOL} %D{%H:%M:%S}%f"
   local expanded_right="${(%%)right}"
@@ -635,7 +641,10 @@ add-zsh-hook precmd _modern_dark_pro_precmd
 PROMPT='$(_modern_dark_pro_first_line)
 %F{${COLOR_CONNECTOR}}└─%f ${_MODERN_DARK_PRO_PROMPT_CHAR} '
 
-# Right Prompt is empty since the clock is on the top line
-RPROMPT=''
+if [[ "${MODERN_DARK_PRO_CLOCK_POSITION}" == "rprompt" ]]; then
+  RPROMPT='%F{${COLOR_CONNECTOR}}${MODERN_DARK_PRO_TIME_SYMBOL} %D{%H:%M:%S}%f'
+else
+  RPROMPT=''
+fi
 
 
