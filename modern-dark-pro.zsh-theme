@@ -135,8 +135,9 @@ fi
 
 
 
-# Custom Git Status Prompt
+# Custom Git Status Prompt (zero-subshell via REPLY)
 function _modern_dark_pro_git_prompt() {
+  REPLY=""
   # Avoid executing commands if not inside Git repository
   if ! git rev-parse --is-inside-work-tree &>/dev/null; then
     return
@@ -163,13 +164,13 @@ function _modern_dark_pro_git_prompt() {
     fi
   fi
 
-
   # Get branch information and status in a single Git call
   local git_status_out
   git_status_out=$(git status --porcelain -b 2>/dev/null)
   
-  local branch_line
-  branch_line=$(echo "${git_status_out}" | head -n 1)
+  local -a status_lines
+  status_lines=( ${(f)git_status_out} )
+  local branch_line="${status_lines[1]}"
   
   local ref=""
   if [[ "${branch_line}" =~ '^## No commits yet on (.+)$' ]]; then
@@ -182,15 +183,13 @@ function _modern_dark_pro_git_prompt() {
     ref=$(git rev-parse --short HEAD 2>/dev/null)
   fi
 
-  local file_lines
-  file_lines=$(echo "${git_status_out}" | tail -n +2)
-  
   local dirty=0
   local staged=0
   local untracked=0
   
-  if [[ -n "${file_lines}" ]]; then
-    while IFS= read -r line; do
+  if [[ ${#status_lines} -gt 1 ]]; then
+    local line
+    for line in "${status_lines[@]:1}"; do
       [[ -z "${line}" ]] && continue
       local code="${line:0:2}"
       if [[ "${code}" == "??" ]]; then
@@ -206,7 +205,7 @@ function _modern_dark_pro_git_prompt() {
           dirty=1
         fi
       fi
-    done <<< "${file_lines}"
+    done
   fi
 
   # Parse ahead/behind status
@@ -258,7 +257,7 @@ function _modern_dark_pro_git_prompt() {
   
   local git_url=""
   if [[ "${MODERN_DARK_PRO_CLICKABLE_GIT}" == "true" && -n "${_MODERN_DARK_PRO_CACHED_GIT_REMOTE}" && -z "${SSH_CONNECTION}" && -z "${SSH_CLIENT}" && -z "${SSH_TTY}" ]]; then
-    local REPLY
+    local REPLY_URL
     _modern_dark_pro_urlencode "${ref}"
     local escaped_ref="${REPLY//\%/%%}"
     if [[ "${_MODERN_DARK_PRO_CACHED_GIT_REMOTE}" == *"bitbucket"* ]]; then
@@ -275,32 +274,34 @@ function _modern_dark_pro_git_prompt() {
     git_display="%F{${COLOR_GIT_BRANCH}}${MODERN_DARK_PRO_GIT_SYMBOL} ${ref}%f"
   fi
 
-  
   # Join items with a space and add a space after '[' and before ']' for padding/breathing room
   if [[ ${#status_items} -gt 0 ]]; then
     local joined_status="${(j: :)status_items}"
     git_display+=" %F{${COLOR_CONNECTOR}}[ ${joined_status} %F{${COLOR_CONNECTOR}}]%f"
   fi
 
-  echo -n "%F{${COLOR_CONNECTOR}} on%f ${git_display}"
+  REPLY="%F{${COLOR_CONNECTOR}} on%f ${git_display}"
 }
 
-# SSH Session Indicator
+# SSH Session Indicator (zero-subshell via REPLY)
 function _modern_dark_pro_ssh_status() {
+  REPLY=""
   if [[ -n "${SSH_CONNECTION}" || -n "${SSH_CLIENT}" || -n "${SSH_TTY}" ]]; then
-    echo -n " %F{${COLOR_WARNING}}${MODERN_DARK_PRO_SSH_SYMBOL} %n@%m%f"
+    REPLY=" %F{${COLOR_WARNING}}${MODERN_DARK_PRO_SSH_SYMBOL} %n@%m%f"
   fi
 }
 
-# Read-Only Directory Indicator
+# Read-Only Directory Indicator (zero-subshell via REPLY)
 function _modern_dark_pro_readonly() {
+  REPLY=""
   if [[ ! -w . ]]; then
-    echo -n " %F{${COLOR_ERROR}}${MODERN_DARK_PRO_LOCK_SYMBOL}%f"
+    REPLY=" %F{${COLOR_ERROR}}${MODERN_DARK_PRO_LOCK_SYMBOL}%f"
   fi
 }
 
-# Python Virtualenv / Conda Indicator
+# Python Virtualenv / Conda Indicator (zero-subshell via REPLY)
 function _modern_dark_pro_venv() {
+  REPLY=""
   local env_name=""
   if [[ -n "${VIRTUAL_ENV}" ]]; then
     env_name=$(basename "${VIRTUAL_ENV}")
@@ -309,14 +310,15 @@ function _modern_dark_pro_venv() {
   fi
   
   if [[ -n "${env_name}" ]]; then
-    echo -n " %F{#e6db74}${MODERN_DARK_PRO_PYTHON_SYMBOL} ${env_name}%f"
+    REPLY=" %F{#e6db74}${MODERN_DARK_PRO_PYTHON_SYMBOL} ${env_name}%f"
   fi
 }
 
-# Running Background Jobs Indicator
+# Running Background Jobs Indicator (zero-subshell via REPLY)
 function _modern_dark_pro_jobs() {
+  REPLY=""
   if [[ ${#jobstates} -gt 0 ]]; then
-    echo -n " %F{${COLOR_WARNING}}${MODERN_DARK_PRO_JOBS_SYMBOL} ${#jobstates}%f"
+    REPLY=" %F{${COLOR_WARNING}}${MODERN_DARK_PRO_JOBS_SYMBOL} ${#jobstates}%f"
   fi
 }
 
@@ -450,53 +452,59 @@ function _modern_dark_pro_update_runtimes() {
   fi
 }
 
-# Node.js Display
+# Node.js Display (zero-subshell via REPLY)
 function _modern_dark_pro_node() {
+  REPLY=""
   if [[ -n "${_MODERN_DARK_PRO_CACHED_NODE}" ]]; then
-    echo -n " %F{#81c784}${MODERN_DARK_PRO_NODE_SYMBOL} ${_MODERN_DARK_PRO_CACHED_NODE}%f"
+    REPLY=" %F{#81c784}${MODERN_DARK_PRO_NODE_SYMBOL} ${_MODERN_DARK_PRO_CACHED_NODE}%f"
   fi
 }
 
-# Go Display
+# Go Display (zero-subshell via REPLY)
 function _modern_dark_pro_go() {
+  REPLY=""
   if [[ -n "${_MODERN_DARK_PRO_CACHED_GO}" ]]; then
-    echo -n " %F{#4dd0e1}${MODERN_DARK_PRO_GO_SYMBOL} ${_MODERN_DARK_PRO_CACHED_GO}%f"
+    REPLY=" %F{#4dd0e1}${MODERN_DARK_PRO_GO_SYMBOL} ${_MODERN_DARK_PRO_CACHED_GO}%f"
   fi
 }
 
-# Rust Display
+# Rust Display (zero-subshell via REPLY)
 function _modern_dark_pro_rust() {
+  REPLY=""
   if [[ -n "${_MODERN_DARK_PRO_CACHED_RUST}" ]]; then
-    echo -n " %F{#e57373}${MODERN_DARK_PRO_RUST_SYMBOL} ${_MODERN_DARK_PRO_CACHED_RUST}%f"
+    REPLY=" %F{#e57373}${MODERN_DARK_PRO_RUST_SYMBOL} ${_MODERN_DARK_PRO_CACHED_RUST}%f"
   fi
 }
 
-# Terraform Display
+# Terraform Display (zero-subshell via REPLY)
 function _modern_dark_pro_terraform() {
+  REPLY=""
   if [[ -n "${_MODERN_DARK_PRO_CACHED_TF}" ]]; then
-    echo -n " %F{#ba68c8}${MODERN_DARK_PRO_TF_SYMBOL} ${_MODERN_DARK_PRO_CACHED_TF}%f"
+    REPLY=" %F{#ba68c8}${MODERN_DARK_PRO_TF_SYMBOL} ${_MODERN_DARK_PRO_CACHED_TF}%f"
   fi
 }
 
-# Kubernetes Context Display (reads context from ~/.kube/config directly for speed)
+# Kubernetes Context Display (zero-subshell via REPLY)
 function _modern_dark_pro_k8s() {
+  REPLY=""
   local config_file="${KUBECONFIG:-$HOME/.kube/config}"
   if [[ -f "${config_file}" ]]; then
     local ctx
     ctx=$(grep 'current-context:' "${config_file}" 2>/dev/null | awk '{print $2}')
     if [[ -n "${ctx}" ]]; then
-      echo -n " %F{#64b5f6}${MODERN_DARK_PRO_K8S_SYMBOL} ${ctx}%f"
+      REPLY=" %F{#64b5f6}${MODERN_DARK_PRO_K8S_SYMBOL} ${ctx}%f"
     fi
   fi
 }
 
-# AWS Profile Display (checks environment variables)
+# AWS Profile Display (zero-subshell via REPLY)
 function _modern_dark_pro_aws() {
+  REPLY=""
   if [[ -n "${AWS_PROFILE}" ]]; then
     local region="${AWS_DEFAULT_REGION:-${AWS_REGION}}"
     local display="${AWS_PROFILE}"
     [[ -n "${region}" ]] && display+="@${region}"
-    echo -n " %F{#ffb74d}${MODERN_DARK_PRO_AWS_SYMBOL} ${display}%f"
+    REPLY=" %F{#ffb74d}${MODERN_DARK_PRO_AWS_SYMBOL} ${display}%f"
   fi
 }
 
@@ -552,19 +560,20 @@ function _modern_dark_pro_precmd() {
     local escaped_url="${REPLY//\%/%%}"
     _MODERN_DARK_PRO_PATH_URL="file://${escaped_url}"
   fi
-  _MODERN_DARK_PRO_GIT_STATUS=$(_modern_dark_pro_git_prompt)
-  _MODERN_DARK_PRO_SSH_STATUS=$(_modern_dark_pro_ssh_status)
-  _MODERN_DARK_PRO_READONLY=$(_modern_dark_pro_readonly)
-  _MODERN_DARK_PRO_VENV=$(_modern_dark_pro_venv)
-  _MODERN_DARK_PRO_JOBS=$(_modern_dark_pro_jobs)
+  
+  REPLY=""; _modern_dark_pro_git_prompt; _MODERN_DARK_PRO_GIT_STATUS="${REPLY}"
+  REPLY=""; _modern_dark_pro_ssh_status; _MODERN_DARK_PRO_SSH_STATUS="${REPLY}"
+  REPLY=""; _modern_dark_pro_readonly; _MODERN_DARK_PRO_READONLY="${REPLY}"
+  REPLY=""; _modern_dark_pro_venv; _MODERN_DARK_PRO_VENV="${REPLY}"
+  REPLY=""; _modern_dark_pro_jobs; _MODERN_DARK_PRO_JOBS="${REPLY}"
   
   # Runtimes and Cloud indicators
-  _MODERN_DARK_PRO_NODE=$(_modern_dark_pro_node)
-  _MODERN_DARK_PRO_GO=$(_modern_dark_pro_go)
-  _MODERN_DARK_PRO_RUST=$(_modern_dark_pro_rust)
-  _MODERN_DARK_PRO_TF=$(_modern_dark_pro_terraform)
-  _MODERN_DARK_PRO_K8S=$(_modern_dark_pro_k8s)
-  _MODERN_DARK_PRO_AWS=$(_modern_dark_pro_aws)
+  REPLY=""; _modern_dark_pro_node; _MODERN_DARK_PRO_NODE="${REPLY}"
+  REPLY=""; _modern_dark_pro_go; _MODERN_DARK_PRO_GO="${REPLY}"
+  REPLY=""; _modern_dark_pro_rust; _MODERN_DARK_PRO_RUST="${REPLY}"
+  REPLY=""; _modern_dark_pro_terraform; _MODERN_DARK_PRO_TF="${REPLY}"
+  REPLY=""; _modern_dark_pro_k8s; _MODERN_DARK_PRO_K8S="${REPLY}"
+  REPLY=""; _modern_dark_pro_aws; _MODERN_DARK_PRO_AWS="${REPLY}"
   
   if [[ -n "${elapsed_time}" ]]; then
     _MODERN_DARK_PRO_ELAPSED_TIME=" ${elapsed_time}"
