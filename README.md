@@ -14,8 +14,8 @@ Designed for developers who appreciate clean typography, high readability, subtl
   - Displays branch name.
   - Interactive status badges: Modified (`` in Red), Staged (`` in Green), Untracked (`` in Yellow), Stashed (`` in Yellow). Separated with generous spacing for maximum legibility.
   - Sync status with remote: Ahead (`` in Green), Behind (`` in Red).
-- **⏱️ Execution Timer**: Tracks command duration and prints it (e.g., ` 2.5s`) if it takes longer than 2 seconds (configurable).
-- **🕒 Right Prompt Clock**: Displays the current system time (`HH:MM:SS`) on the right side of the terminal, aligned perfectly and out of the way.
+- **⏱️ Execution Timer**: Tracks command duration and prints it (e.g., ` 2.5s` or ` 1m 5.43s` for durations >60s) if it takes longer than 2 seconds (configurable).
+- **🕒 Dynamic Clock**: Displays system time (`HH:MM:SS`) aligned to the right, either on the top line or via native Zsh `RPROMPT`.
 - **🐍 Python virtualenv / Conda**: Displays active virtual environments with a custom logo (``) so you always know which environment is running.
 - **🔒 Read-only Lock**: Displays a lock icon (``) if you navigate into a folder where you don't have write permissions.
 - **⚙️ Background Jobs**: Displays a gear icon (`⚙`) followed by the count of running background jobs in your session.
@@ -171,6 +171,16 @@ export MODERN_DARK_PRO_GIT_DIFF_STATS_STAGED=true
 ```
 
 When enabled, the dirty symbol (`✗`) is replaced by the line counts, since they convey the same information. Binary files are skipped (they have no line counts). The counter is hidden when there are no tracked changes (e.g. only untracked files present).
+
+### 8. Clock Position & Right Alignment
+Choose how the system clock is positioned and right-aligned in your terminal:
+- `'top'` (default): Space-padded right alignment on the top guide line.
+- `'rprompt'`: Positioned on the prompt line (`└─ ❯`) using Zsh's native `RPROMPT`, offering maximum right margin alignment and automatic window resizing.
+
+```bash
+# Choose clock position: 'top' (default) or 'rprompt'
+export MODERN_DARK_PRO_CLOCK_POSITION="top"
+```
 
 ---
 
