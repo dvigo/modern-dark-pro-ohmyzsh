@@ -1,8 +1,14 @@
 # 🎨 Modern Dark Pro - Oh My Zsh Theme
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Zsh](https://img.shields.io/badge/Zsh-v5.8%2B-blue.svg?logo=zsh&logoColor=white)](https://www.zsh.org/)
+[![Oh My Zsh](https://img.shields.io/badge/Oh_My_Zsh-Compatible-green.svg?logo=ohmyzsh&logoColor=white)](https://ohmyz.sh/)
+[![i18n](https://img.shields.io/badge/i18n-5_Languages-brightgreen.svg)](README.md)
+[![Performance](https://img.shields.io/badge/Performance-Zero_Subshells-purple.svg)](README.md)
+
 A premium, modern, and dark-mode-optimized Oh My Zsh theme inspired by the [Modern Dark Pro](https://github.com/dvigo/modern-dark-pro) color palettes. 
 
-Designed for developers who appreciate clean typography, high readability, subtle guide connectors, and fast execution times.
+Designed for developers who appreciate clean typography, high readability, subtle guide connectors, and sub-millisecond execution times.
 
 ---
 
