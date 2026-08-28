@@ -585,11 +585,12 @@ function _modern_dark_pro_first_line() {
   local expanded_left="${(%%)left}"
   
   # Strip OSC 8 hyperlinks and ANSI color escape sequences for exact visual width calculation
+  local clean_left="${expanded_left}"
+  while [[ "${clean_left}" =~ $'\x1b\\]8;;[^\x1b]*\x1b\\\\' ]]; do
+    clean_left="${clean_left/$MATCH/}"
+  done
   setopt local_options extended_glob
-  local esc=$'\x1b'
-  local clean_left="${expanded_left//${esc}\]8;;[^${esc}]#${esc}\\/}"
-  clean_left="${clean_left//${esc}\]8;;${esc}\\/}"
-  clean_left="${clean_left//${esc}\[[0-9;]##[a-zA-Z]/}"
+  clean_left="${clean_left//$'\x1b'\[[0-9;]##[a-zA-Z]/}"
   local left_width=${(m)#clean_left}
   
   # Prepare the right-aligned clock block
