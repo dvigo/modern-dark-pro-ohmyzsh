@@ -183,6 +183,32 @@ function _modern_dark_pro_git_prompt() {
     ref=$(git rev-parse --short HEAD 2>/dev/null)
   fi
 
+  # Check active Git operations (Rebase, Merge, Cherry-Pick, Bisect)
+  local git_dir
+  git_dir=$(git rev-parse --git-dir 2>/dev/null)
+  if [[ -n "${git_dir}" ]]; then
+    if [[ -d "${git_dir}/rebase-merge" ]]; then
+      local step="" total=""
+      [[ -f "${git_dir}/rebase-merge/msgnum" ]] && step=$(< "${git_dir}/rebase-merge/msgnum")
+      [[ -f "${git_dir}/rebase-merge/end" ]] && total=$(< "${git_dir}/rebase-merge/end")
+      if [[ -n "${step}" && -n "${total}" ]]; then
+        ref+=" %F{${COLOR_ERROR}}| REBASING ${step}/${total}%f"
+      else
+        ref+=" %F{${COLOR_ERROR}}| REBASING%f"
+      fi
+    elif [[ -d "${git_dir}/rebase-apply" ]]; then
+      ref+=" %F{${COLOR_ERROR}}| REBASING%f"
+    elif [[ -f "${git_dir}/MERGE_HEAD" ]]; then
+      ref+=" %F{${COLOR_WARNING}}| MERGING%f"
+    elif [[ -f "${git_dir}/CHERRY_PICK_HEAD" ]]; then
+      ref+=" %F{${COLOR_WARNING}}| CHERRY-PICKING%f"
+    elif [[ -f "${git_dir}/BISECT_LOG" ]]; then
+      ref+=" %F{${COLOR_WARNING}}| BISECTING%f"
+    elif [[ -f "${git_dir}/REVERT_HEAD" ]]; then
+      ref+=" %F{${COLOR_WARNING}}| REVERTING%f"
+    fi
+  fi
+
   local dirty=0
   local staged=0
   local untracked=0
