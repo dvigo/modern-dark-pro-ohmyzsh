@@ -599,8 +599,20 @@ function _modern_dark_pro_first_line() {
   local clean_right="${expanded_right//$'\x1b'\[[0-9;]##[a-zA-Z]/}"
   local right_width=${(m)#clean_right}
   
+  # Determine dynamic terminal column width (fallback to stty / tput if COLUMNS is stale)
+  local cols="${COLUMNS:-0}"
+  local tty_cols=$(stty size 2>/dev/null | awk '{print $2}')
+  if [[ -n "${tty_cols}" && "${tty_cols}" -gt "${cols}" ]]; then
+    cols="${tty_cols}"
+  fi
+  local tput_c=$(tput cols 2>/dev/null)
+  if [[ -n "${tput_c}" && "${tput_c}" -gt "${cols}" ]]; then
+    cols="${tput_c}"
+  fi
+  [[ "${cols}" -le 0 ]] && cols=80
+
   # Calculate required padding width (subtracting left/right width from terminal columns)
-  local pad_width=$(( COLUMNS - left_width - right_width ))
+  local pad_width=$(( cols - left_width - right_width ))
   local padding=" "
   if (( pad_width > 1 )); then
     padding=""
